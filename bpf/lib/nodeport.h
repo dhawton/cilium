@@ -99,7 +99,6 @@ static __always_inline bool nodeport_uses_dsr6(const struct ipv6_ct_tuple *tuple
 }
 
 static __always_inline int nodeport_snat_fwd_ipv6(struct __ctx_buff *ctx,
-						  const union v6addr *addr,
 						  __s8 *ext_err)
 {
 	struct ipv6_nat_target target = {
@@ -108,9 +107,7 @@ static __always_inline int nodeport_snat_fwd_ipv6(struct __ctx_buff *ctx,
 	};
 	int ret;
 
-	ipv6_addr_copy(&target.addr, addr);
-
-	ret = snat_v6_needed(ctx, addr) ?
+	ret = snat_v6_needed(ctx, &target.addr) ?
 	      snat_v6_nat(ctx, &target, ext_err) : CTX_ACT_OK;
 	if (ret == NAT_PUNT_TO_STACK)
 		ret = CTX_ACT_OK;
@@ -1005,7 +1002,10 @@ skip_service_lookup:
 			if (IS_ERR(ret))
 				return ret;
 #endif
+
+#ifndef ENABLE_MASQUERADE
 			return CTX_ACT_OK;
+#endif
 		}
 #endif /* ENABLE_DSR */
 
@@ -1281,13 +1281,6 @@ int tail_handle_snat_fwd_ipv6(struct __ctx_buff *ctx)
 	enum trace_point obs_point;
 	int ret;
 	__s8 ext_err = 0;
-#if defined(TUNNEL_MODE) && defined(IS_BPF_OVERLAY)
-	union v6addr addr = { .p1 = 0 };
-
-	BPF_V6(addr, ROUTER_IP);
-#else
-	union v6addr addr = IPV6_DIRECT_ROUTING;
-#endif
 
 #ifdef IS_BPF_OVERLAY
 	obs_point = TRACE_TO_OVERLAY;
@@ -1295,7 +1288,7 @@ int tail_handle_snat_fwd_ipv6(struct __ctx_buff *ctx)
 	obs_point = TRACE_TO_NETWORK;
 #endif
 
-	ret = nodeport_snat_fwd_ipv6(ctx, &addr, &ext_err);
+	ret = nodeport_snat_fwd_ipv6(ctx, &ext_err);
 	if (IS_ERR(ret))
 		return send_drop_notify_error_ext(ctx, 0, ret, ext_err,
 						  CTX_ACT_DROP, METRIC_EGRESS);
@@ -1315,7 +1308,8 @@ __handle_nat_fwd_ipv6(struct __ctx_buff *ctx, struct trace_ctx *trace)
 		return ret;
 
 #if !defined(ENABLE_DSR) ||						\
-    (defined(ENABLE_DSR) && defined(ENABLE_DSR_HYBRID))
+    (defined(ENABLE_DSR) && defined(ENABLE_DSR_HYBRID)) ||		\
+     defined(ENABLE_MASQUERADE)
 	if (!ctx_snat_done(ctx)) {
 		ep_tail_call(ctx, CILIUM_CALL_IPV6_NODEPORT_SNAT_FWD);
 		ret = DROP_MISSED_TAIL_CALL;
