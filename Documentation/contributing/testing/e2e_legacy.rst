@@ -4,10 +4,16 @@
     Please use the official rendered version released here:
     https://docs.cilium.io
 
-.. _testsuite:
+.. _testsuite-legacy:
 
-End-To-End Testing Framework
-============================
+End-To-End Testing Framework (Legacy)
+=====================================
+
+.. note::
+
+   Cilium is in a process of migrating from Ginkgo to a new framework for
+   writing and running end-to-end tests. Please refer to
+   :ref:`the new e2e documentation<e2e>`.
 
 Introduction
 ~~~~~~~~~~~~

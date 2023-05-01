@@ -488,7 +488,7 @@ Making Changes
 #. Run ``make -C bpf checkpatch`` to validate against your changes
    coding style and commit messages.
 #. See :ref:`integration_testing` on how to run integration tests.
-#. See :ref:`testsuite` for information how to run the end to end integration
+#. See :ref:`testsuite-legacy` for information how to run the end to end integration
    tests
 #. If you are making documentation changes, you can generate documentation files
    and serve them locally on ``http://localhost:9081`` by running ``make render-docs``.
