@@ -72,6 +72,7 @@ var (
 // directory. All test commands are executed in this privileged Pod after
 // uninstalling Cilium from the cluster.
 var _ = Describe("K8sDatapathVerifier", func() {
+	Skip("Quarantining due to https://github.com/cilium/cilium/issues/25255")
 	var kubectl *helpers.Kubectl
 
 	collectObjectFiles := func() {
