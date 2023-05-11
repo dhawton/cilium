@@ -57,3 +57,7 @@ ${SUDO} docker run --name cilium $DOCKER_OPTS $CILIUM_IMAGE /bin/bash -c "groupa
 # Copy Cilium CLI
 ${SUDO} docker cp cilium:/usr/bin/cilium /usr/bin/
 ${SUDO} docker cp cilium:/usr/bin/cilium-bugtool /usr/bin/
+${SUDO} docker cp cilium:/usr/bin/hubble /usr/bin/
+${SUDO} docker cp cilium:/usr/local/bin/clang /usr/bin/
+${SUDO} docker cp cilium:/usr/local/bin/llc /usr/bin/
+${SUDO} docker cp cilium:/usr/local/bin/tc /usr/bin/
