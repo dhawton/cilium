@@ -8,6 +8,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"net"
+	"os/exec"
 	"runtime"
 	"sync"
 	"time"
@@ -39,6 +40,11 @@ type linuxPrivilegedBaseTestSuite struct {
 	mtuConfig      mtu.Configuration
 	enableIPv4     bool
 	enableIPv6     bool
+}
+
+func (s *linuxPrivilegedBaseTestSuite) TearDownSuite(c *check.C) {
+	deleteDeviceWithLogsSuite(c, dummyHostDeviceName)
+	deleteDeviceWithLogsSuite(c, dummyExternalDeviceName)
 }
 
 type linuxPrivilegedIPv6OnlyTestSuite struct {
@@ -133,9 +139,42 @@ func (s *linuxPrivilegedIPv4AndIPv6TestSuite) SetUpTest(c *check.C) {
 	s.linuxPrivilegedBaseTestSuite.SetUpTest(c, addressing, true, true)
 }
 
+func deleteDeviceWithLogs(c *check.C, deviceName string) {
+	fmt.Printf("Tearing down removing device %s. Test %s\n", deviceName, c.TestName())
+	deleteDeviceWithLogsCommon(c, deviceName)
+}
+
+func deleteDeviceWithLogsCommon(c *check.C, deviceName string) {
+	l, err := netlink.LinkByName(deviceName)
+	if err == nil {
+		fmt.Printf("Device is still present %s. Test %s. Index: %d, Name: %s\n", deviceName, c.TestName(), l.Attrs().Index, l.Attrs().Name)
+	} else {
+		fmt.Printf("Device doesn't exist %s. Test %s. Error: %s\n", deviceName, c.TestName(), err)
+	}
+	err = removeDevice(deviceName)
+	c.Assert(err, check.IsNil)
+	l, err = netlink.LinkByName(deviceName)
+	if err == nil {
+		fmt.Printf("ERROR device is still present %s. Test %s. Index: %d, Name: %s\n", deviceName, c.TestName(), l.Attrs().Index, l.Attrs().Name)
+	} else {
+		fmt.Printf("Device successfully deleted %s. Test %s. Error: %s\n", deviceName, c.TestName(), err)
+		// Execute "ip link"
+		showCmd := exec.Command("ip", "link")
+		showOutput, err := showCmd.Output()
+		c.Assert(err, check.IsNil)
+		fmt.Println("ip link output:")
+		fmt.Println(string(showOutput))
+	}
+}
+
+func deleteDeviceWithLogsSuite(c *check.C, deviceName string) {
+	fmt.Printf("Suite down removing device %s. Test %s\n", deviceName, c.TestName())
+	deleteDeviceWithLogsCommon(c, deviceName)
+}
+
 func tearDownTest(c *check.C) {
-	removeDevice(dummyHostDeviceName)
-	removeDevice(dummyExternalDeviceName)
+	deleteDeviceWithLogs(c, dummyHostDeviceName)
+	deleteDeviceWithLogs(c, dummyExternalDeviceName)
 	err := tunnel.TunnelMap().Unpin()
 	c.Assert(err, check.IsNil)
 }
@@ -185,11 +224,12 @@ func setupDummyDevice(name string, ips ...net.IP) error {
 	return nil
 }
 
-func removeDevice(name string) {
+func removeDevice(name string) error {
 	l, err := netlink.LinkByName(name)
 	if err == nil {
-		netlink.LinkDel(l)
+		return netlink.LinkDel(l)
 	}
+	return nil
 }
 
 func (s *linuxPrivilegedBaseTestSuite) TestUpdateNodeRoute(c *check.C) {
