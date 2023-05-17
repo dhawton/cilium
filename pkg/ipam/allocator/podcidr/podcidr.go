@@ -591,15 +591,11 @@ func releaseCIDRs(cidrAllocators []cidralloc.CIDRAllocator, cidrsToRelease []*ne
 			if !clusterCIDR.InRange(ipNet) {
 				continue
 			}
-			err := clusterCIDR.Release(ipNet)
-			log = log.WithFields(logrus.Fields{
+			clusterCIDR.Release(ipNet)
+
+			log.WithFields(logrus.Fields{
 				"cidr": ipNet.String(),
-			})
-			if err != nil {
-				log.WithError(err).Error("failed to release cidr")
-				continue
-			}
-			log.Info("node released cidrs")
+			}).Info("node released cidrs")
 			break
 		}
 	}
@@ -805,7 +801,8 @@ func allocateIPNet(allType allocatorType, cidrSets []cidralloc.CIDRAllocator, ne
 			}
 			revertStack.Push(func() error {
 				// In case of a follow up error release this new allocated CIDR.
-				return cidrSet.Release(newCIDR)
+				cidrSet.Release(newCIDR)
+				return nil
 			})
 			break
 		}
@@ -925,7 +922,8 @@ func allocateFirstFreeCIDR(cidrAllocators []cidralloc.CIDRAllocator) (revertFunc
 		return nil, nil, err
 	}
 	revertStack.Push(func() error {
-		return (*firstFreeAllocator).Release(cidr)
+		(*firstFreeAllocator).Release(cidr)
+		return nil
 	})
 	return revertStack.Revert, cidr, err
 }

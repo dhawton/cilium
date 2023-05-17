@@ -16,7 +16,7 @@ type CIDRAllocator interface {
 
 	Occupy(cidr *net.IPNet) error
 	AllocateNext() (*net.IPNet, error)
-	Release(cidr *net.IPNet) error
+	Release(cidr *net.IPNet)
 	IsAllocated(cidr *net.IPNet) (bool, error)
 	IsFull() bool
 	InRange(cidr *net.IPNet) bool

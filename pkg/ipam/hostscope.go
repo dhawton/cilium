@@ -46,8 +46,8 @@ func (h *hostScopeAllocator) AllocateWithoutSyncUpstream(ip net.IP, owner string
 	return &AllocationResult{IP: ip}, nil
 }
 
-func (h *hostScopeAllocator) Release(ip net.IP, pool Pool) error {
-	return h.allocator.Release(ip)
+func (h *hostScopeAllocator) Release(ip net.IP, pool Pool) {
+	h.allocator.Release(ip)
 }
 
 func (h *hostScopeAllocator) AllocateNext(owner string, pool Pool) (*AllocationResult, error) {

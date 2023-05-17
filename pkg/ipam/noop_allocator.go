@@ -23,9 +23,7 @@ func (n *noOpAllocator) AllocateWithoutSyncUpstream(ip net.IP, owner string, poo
 	return nil, errNotSupported
 }
 
-func (n *noOpAllocator) Release(ip net.IP, pool Pool) error {
-	return errNotSupported
-}
+func (n *noOpAllocator) Release(ip net.IP, pool Pool) {}
 
 func (n *noOpAllocator) AllocateNext(owner string, pool Pool) (*AllocationResult, error) {
 	return nil, errNotSupported
@@ -39,5 +37,4 @@ func (n *noOpAllocator) Dump() (map[string]string, string) {
 	return nil, "delegated to plugin"
 }
 
-func (n *noOpAllocator) RestoreFinished() {
-}
+func (n *noOpAllocator) RestoreFinished() {}

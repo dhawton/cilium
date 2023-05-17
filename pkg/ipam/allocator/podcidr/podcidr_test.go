@@ -77,7 +77,7 @@ func runWithIPAMModes(ipamModes []string, testFunc func(mode string)) {
 type mockCIDRAllocator struct {
 	OnOccupy       func(cidr *net.IPNet) error
 	OnAllocateNext func() (*net.IPNet, error)
-	OnRelease      func(cidr *net.IPNet) error
+	OnRelease      func(cidr *net.IPNet)
 	OnIsAllocated  func(cidr *net.IPNet) (bool, error)
 	OnIsFull       func() bool
 	OnInRange      func(cidr *net.IPNet) bool
@@ -101,9 +101,10 @@ func (d *mockCIDRAllocator) AllocateNext() (*net.IPNet, error) {
 	panic("d.AllocateNext should not have been called!")
 }
 
-func (d *mockCIDRAllocator) Release(cidr *net.IPNet) error {
+func (d *mockCIDRAllocator) Release(cidr *net.IPNet) {
 	if d.OnRelease != nil {
-		return d.OnRelease(cidr)
+		d.OnRelease(cidr)
+		return
 	}
 	panic("d.Release should not have been called!")
 }
@@ -511,9 +512,8 @@ func (s *PodCIDRSuite) TestNodesPodCIDRManager_Delete(c *C) {
 					canAllocateNodes: true,
 					v4ClusterCIDRs: []cidralloc.CIDRAllocator{
 						&mockCIDRAllocator{
-							OnRelease: func(cidr *net.IPNet) error {
+							OnRelease: func(cidr *net.IPNet) {
 								c.Assert(cidr, checker.DeepEquals, mustNewCIDRs("10.10.0.0/24")[0])
-								return nil
 							},
 							OnInRange: func(cidr *net.IPNet) bool {
 								c.Assert(cidr, checker.DeepEquals, mustNewCIDRs("10.10.0.0/24")[0])
@@ -1053,10 +1053,9 @@ func (s *PodCIDRSuite) TestNodesPodCIDRManager_allocateIPNets(c *C) {
 								c.Assert(cidr, checker.DeepEquals, mustNewCIDRs("10.10.0.0/24")[0])
 								return nil
 							},
-							OnRelease: func(cidr *net.IPNet) error {
+							OnRelease: func(cidr *net.IPNet) {
 								c.Assert(cidr, checker.DeepEquals, mustNewCIDRs("10.10.0.0/24")[0])
 								releaseCallsv4++
-								return nil
 							},
 							OnInRange: func(cidr *net.IPNet) bool {
 								c.Assert(cidr, checker.DeepEquals, mustNewCIDRs("10.10.0.0/24")[0])
@@ -1359,10 +1358,9 @@ func (s *PodCIDRSuite) TestNodesPodCIDRManager_allocateNext(c *C) {
 								allocateNextCallsv4++
 								return mustNewCIDRs("10.10.0.0/24")[0], nil
 							},
-							OnRelease: func(cidr *net.IPNet) error {
+							OnRelease: func(cidr *net.IPNet) {
 								c.Assert(cidr, checker.DeepEquals, mustNewCIDRs("10.10.0.0/24")[0])
 								releaseCallsv4++
-								return nil
 							},
 							OnIsFull: func() bool {
 								return false
@@ -1473,10 +1471,9 @@ func (s *PodCIDRSuite) TestNodesPodCIDRManager_releaseIPNets(c *C) {
 				onReleaseCalls = 0
 				cidrSet := []cidralloc.CIDRAllocator{
 					&mockCIDRAllocator{
-						OnRelease: func(cidr *net.IPNet) error {
+						OnRelease: func(cidr *net.IPNet) {
 							onReleaseCalls++
 							c.Assert(cidr, checker.DeepEquals, mustNewCIDRs("10.0.0.0/16")[0])
-							return nil
 						},
 						OnInRange: func(cidr *net.IPNet) bool {
 							c.Assert(cidr, checker.DeepEquals, mustNewCIDRs("10.0.0.0/16")[0])
@@ -1508,10 +1505,9 @@ func (s *PodCIDRSuite) TestNodesPodCIDRManager_releaseIPNets(c *C) {
 				onReleaseCalls = 0
 				cidrSet := []cidralloc.CIDRAllocator{
 					&mockCIDRAllocator{
-						OnRelease: func(cidr *net.IPNet) error {
+						OnRelease: func(cidr *net.IPNet) {
 							onReleaseCalls++
 							c.Assert(cidr, checker.DeepEquals, mustNewCIDRs("fd00::/80")[0])
-							return nil
 						},
 						OnInRange: func(cidr *net.IPNet) bool {
 							c.Assert(cidr, checker.DeepEquals, mustNewCIDRs("fd00::/80")[0])

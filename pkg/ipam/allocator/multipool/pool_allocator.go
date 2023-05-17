@@ -205,10 +205,10 @@ func (p *PoolAllocator) ReleaseNode(nodeName string) error {
 		}
 
 		for cidr := range cidrs.v4 {
-			err = errors.Join(err, releaseCIDR(pool.v4, cidr))
+			releaseCIDR(pool.v4, cidr)
 		}
 		for cidr := range cidrs.v6 {
-			err = errors.Join(err, releaseCIDR(pool.v6, cidr))
+			releaseCIDR(pool.v6, cidr)
 		}
 	}
 
@@ -399,11 +399,7 @@ func (p *PoolAllocator) releaseCIDR(targetNode, sourcePool string, cidr netip.Pr
 		return fmt.Errorf("cannot release from non-existing pool: %s", sourcePool)
 	}
 
-	err := pool.releaseCIDR(cidr)
-	if err != nil {
-		return fmt.Errorf("unable to release from pool %s: %w", sourcePool, err)
-	}
-
+	pool.releaseCIDR(cidr)
 	p.markReleased(targetNode, sourcePool, cidr)
 
 	return nil

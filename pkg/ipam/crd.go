@@ -801,19 +801,17 @@ func (a *crdAllocator) AllocateWithoutSyncUpstream(ip net.IP, owner string, pool
 // Release will release the specified IP or return an error if the IP has not
 // been allocated before. The custom resource will be updated to reflect the
 // released IP.
-func (a *crdAllocator) Release(ip net.IP, pool Pool) error {
+func (a *crdAllocator) Release(ip net.IP, pool Pool) {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
 	if _, ok := a.allocated[ip.String()]; !ok {
-		return fmt.Errorf("IP %s is not allocated", ip.String())
+		return
 	}
 
 	delete(a.allocated, ip.String())
 	// Update custom resource to reflect the newly released IP.
 	a.store.refreshTrigger.TriggerWithReason(fmt.Sprintf("release of IP %s", ip.String()))
-
-	return nil
 }
 
 // markAllocated marks a particular IP as allocated

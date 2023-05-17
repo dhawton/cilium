@@ -63,7 +63,7 @@ func occupyCIDR(allocators []cidralloc.CIDRAllocator, cidr netip.Prefix) error {
 	return fmt.Errorf("cidr %s is not part of the requested pool", cidr)
 }
 
-func releaseCIDR(allocators []cidralloc.CIDRAllocator, cidr netip.Prefix) error {
+func releaseCIDR(allocators []cidralloc.CIDRAllocator, cidr netip.Prefix) {
 	ipnet := ip.PrefixToIPNet(cidr)
 	for _, alloc := range allocators {
 		if !alloc.InRange(ipnet) {
@@ -71,17 +71,11 @@ func releaseCIDR(allocators []cidralloc.CIDRAllocator, cidr netip.Prefix) error 
 		}
 
 		allocated, err := alloc.IsAllocated(ipnet)
-		if err != nil {
-			return err
+		if err == nil && allocated {
+			alloc.Release(ipnet)
+			break
 		}
-		if !allocated {
-			return nil // not an error to release a cidr twice
-		}
-
-		return alloc.Release(ipnet)
 	}
-
-	return fmt.Errorf("released cidr %s was not part the pool", cidr)
 }
 
 func (c *cidrPool) allocCIDR(family ipam.Family) (netip.Prefix, error) {
@@ -103,10 +97,10 @@ func (c *cidrPool) occupyCIDR(cidr netip.Prefix) error {
 	}
 }
 
-func (c *cidrPool) releaseCIDR(cidr netip.Prefix) error {
+func (c *cidrPool) releaseCIDR(cidr netip.Prefix) {
 	if cidr.Addr().Is4() {
-		return releaseCIDR(c.v4, cidr)
+		releaseCIDR(c.v4, cidr)
 	} else {
-		return releaseCIDR(c.v6, cidr)
+		releaseCIDR(c.v6, cidr)
 	}
 }

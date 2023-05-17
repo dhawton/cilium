@@ -183,8 +183,7 @@ func Test_MultiPoolManager(t *testing.T) {
 
 	// Deallocate all other IPs from mars pool. This should release the old CIDR
 	for i, ip := range allocatedMarsIPs {
-		err = c.releaseIP(ip, "mars", IPv4, i == numMarsIPs-1)
-		assert.Nil(t, err)
+		c.releaseIP(ip, "mars", IPv4, i == numMarsIPs-1)
 	}
 	assert.Equal(t, <-events, "upsert")
 	currentNode = fakeK8sCiliumNodeAPI.currentNode()

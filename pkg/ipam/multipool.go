@@ -453,20 +453,24 @@ func (m *multiPoolManager) allocateIP(ip net.IP, owner string, poolName Pool, fa
 	return &AllocationResult{IP: ip}, nil
 }
 
-func (m *multiPoolManager) releaseIP(ip net.IP, poolName Pool, family Family, upstreamSync bool) error {
+func (m *multiPoolManager) releaseIP(ip net.IP, poolName Pool, family Family, upstreamSync bool) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
 	pool := m.poolByFamilyLocked(poolName.String(), family)
 	if pool == nil {
-		return fmt.Errorf("unable to release IP %s of unknown pool %q (family %s)", ip, poolName, family)
+		log.WithFields(logrus.Fields{
+			logfields.IPAddr: ip,
+			"poolName":       poolName,
+			logfields.Family: family,
+		}).Warn("unable to release IP from unknown pool")
+		return
 	}
 
-	err := pool.release(ip)
-	if err == nil && upstreamSync {
+	pool.release(ip)
+	if upstreamSync {
 		m.k8sUpdater.TriggerWithReason("release of IP")
 	}
-	return err
 }
 
 func (m *multiPoolManager) Allocator(family Family) Allocator {
@@ -489,8 +493,8 @@ func (c *multiPoolAllocator) AllocateWithoutSyncUpstream(ip net.IP, owner string
 	return c.manager.allocateIP(ip, owner, pool, c.family, false)
 }
 
-func (c *multiPoolAllocator) Release(ip net.IP, pool Pool) error {
-	return c.manager.releaseIP(ip, pool, c.family, true)
+func (c *multiPoolAllocator) Release(ip net.IP, pool Pool) {
+	c.manager.releaseIP(ip, pool, c.family, true)
 }
 
 func (c *multiPoolAllocator) AllocateNext(owner string, pool Pool) (*AllocationResult, error) {

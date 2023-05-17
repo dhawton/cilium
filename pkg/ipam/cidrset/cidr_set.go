@@ -244,10 +244,10 @@ func (s *CidrSet) IsAllocated(cidr *net.IPNet) (bool, error) {
 }
 
 // Release releases the given CIDR range.
-func (s *CidrSet) Release(cidr *net.IPNet) error {
+func (s *CidrSet) Release(cidr *net.IPNet) {
 	begin, end, err := s.getBeginningAndEndIndices(cidr)
 	if err != nil {
-		return err
+		return
 	}
 	s.Lock()
 	defer s.Unlock()
@@ -259,7 +259,6 @@ func (s *CidrSet) Release(cidr *net.IPNet) error {
 			s.allocatedCIDRs--
 		}
 	}
-	return nil
 }
 
 // Occupy marks the given CIDR range as used. Occupy succeeds even if the CIDR

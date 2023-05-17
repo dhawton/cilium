@@ -401,9 +401,9 @@ func (c *clusterPoolAllocator) AllocateNextWithoutSyncUpstream(owner string, poo
 	return &AllocationResult{IP: ip}, nil
 }
 
-func (c *clusterPoolAllocator) Release(ip net.IP, pool Pool) error {
+func (c *clusterPoolAllocator) Release(ip net.IP, pool Pool) {
 	defer sharedCRDWatcher.triggerWithReason("release of IP")
-	return c.pool.release(ip)
+	c.pool.release(ip)
 }
 
 func (c *clusterPoolAllocator) Dump() (map[string]string, string) {

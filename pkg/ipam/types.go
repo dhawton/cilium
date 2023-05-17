@@ -55,7 +55,7 @@ type Allocator interface {
 	AllocateWithoutSyncUpstream(ip net.IP, owner string, pool Pool) (*AllocationResult, error)
 
 	// Release releases a previously allocated IP or fails
-	Release(ip net.IP, pool Pool) error
+	Release(ip net.IP, pool Pool)
 
 	// AllocateNext allocates the next available IP or fails if no more IPs
 	// are available

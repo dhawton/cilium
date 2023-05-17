@@ -60,9 +60,8 @@ func (s *PodCIDRSuite) TestNodesPodCIDRManager_allocateNodeV2(c *C) {
 							OnInRange: func(_ *net.IPNet) bool {
 								return true
 							},
-							OnRelease: func(cidr *net.IPNet) error {
+							OnRelease: func(cidr *net.IPNet) {
 								c.Assert(cidr.String(), checker.DeepEquals, "10.10.1.0/24")
-								return nil
 							},
 						},
 					},
